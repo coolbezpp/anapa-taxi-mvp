@@ -128,6 +128,33 @@ function createOrder() {
     createdAt: new Date().toISOString()
   };
 
+  console.log("Отправляем заказ:", order);
+
+  if (!telegram) {
+    alert(
+      "Mini App открыто не через Telegram."
+      + "Заказ создан только в тестовом режиме."
+    );
+    return;
+  }
+
+  telegram.sendData(
+    JSON.stringify(order)
+  );
+}
+
+  const order = {
+    type: "new_order",
+    id: String(Date.now()),
+    city: APP_CONFIG.city,
+    tariff: APP_CONFIG.tariff,
+    from: fromInput.value.trim(),
+    to: toInput.value.trim(),
+    routePrice: calculatedPrice,
+    comment: commentInput.value.trim(),
+    createdAt: new Date().toISOString()
+  };
+
   console.log("Создан заказ:", order);
 
   if (telegram) {
