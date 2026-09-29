@@ -1,106 +1,249 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
-  >
-
-  <title>Такси Анапа</title>
-
-  <link rel="stylesheet" href="style.css">
-
+  <meta charset="UTF-8" />
+  <title>Такси MVP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 16px;
+      background: var(--tg-theme-bg-color, #fff);
+      color: var(--tg-theme-text-color, #000);
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .order {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
-
 <body>
-  <main class="app">
-    <h1>Такси Анапа</h1>
+  <h1>Такси MVP</h1>
 
-    <section class="card">
-      <label for="from">Откуда</label>
+  <!-- Выбор роли -->
+  <div id="role-screen">
+    <button id="btn-passenger">Я пассажир</button>
+    <button id="btn-driver">Я водитель</button>
+  </div>
 
-      <input
-        id="from"
-        type="text"
-        placeholder="Адрес подачи"
-      >
+  <!-- Экран пассажира -->
+  <div id="passenger-screen" class="hidden">
+    <h2>Создать заказ</h2>
+    <input id="from" placeholder="Откуда" />
+    <input id="to" placeholder="Куда" />
+    <input id="comment" placeholder="Комментарий (необязательно)" />
+    <button id="btn-create-order">Создать заказ</button>
+    <div id="passenger-status"></div>
+    <button id="btn-back-passenger">Назад</button>
+  </div>
 
-      <label for="to">Куда</label>
+  <!-- Экран водителя -->
+  <div id="driver-screen" class="hidden">
+    <h2>Заказы</h2>
+    <button id="btn-refresh-orders">Обновить список</button>
+    <div id="orders-list"></div>
+    <div id="driver-status"></div>
+    <button id="btn-back-driver">Назад</button>
+  </div>
 
-      <input
-        id="to"
-        type="text"
-        placeholder="Адрес назначения"
-      >
+  <script>
+    // === ВСТАВЬТЕ СЮДА ВАШИ ДАННЫЕ ИЗ SUPABASE ===
+    const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
+    const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+    // =============================================
 
-      <label for="route">Маршрут</label>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
 
-      <select id="route">
-        <option value="">
-          Выберите маршрут
-        </option>
-      </select>
+    // Простая "идентификация" пользователя — его Telegram ID
+    const userId = tg.initDataUnsafe?.user?.id?.toString() || 'anon';
 
-      <label for="comment">Комментарий</label>
+    // Переключение экранов
+    const roleScreen = document.getElementById('role-screen');
+    const passengerScreen = document.getElementById('passenger-screen');
+    const driverScreen = document.getElementById('driver-screen');
 
-      <textarea
-        id="comment"
-        rows="3"
-        placeholder="Комментарий водителю"
-      ></textarea>
+    document.getElementById('btn-passenger').onclick = () => {
+      roleScreen.classList.add('hidden');
+      passengerScreen.classList.remove('hidden');
+    };
 
-      <button
-        id="calculateButton"
-        type="button"
-        class="button secondary"
-      >
-        Рассчитать стоимость
-      </button>
-    </section>
+    document.getElementById('btn-driver').onclick = () => {
+      roleScreen.classList.add('hidden');
+      driverScreen.classList.remove('hidden');
+      loadOrders();
+    };
 
-    <section
-      id="priceCard"
-      class="card hidden"
-    >
-      <p>Тариф: Стандарт</p>
+    document.getElementById('btn-back-passenger').onclick = () => {
+      passengerScreen.classList.add('hidden');
+      roleScreen.classList.remove('hidden');
+    };
 
-      <div id="price" class="price">
-        0 ₽
-      </div>
+    document.getElementById('btn-back-driver').onclick = () => {
+      driverScreen.classList.add('hidden');
+      roleScreen.classList.remove('hidden');
+    };
 
-      <button
-        id="orderButton"
-        type="button"
-        class="button primary"
-      >
-        Заказать такси
-      </button>
-    </section>
+    // Создание заказа
+    document.getElementById('btn-create-order').onclick = async () => {
+      const from = document.getElementById('from').value.trim();
+      const to = document.getElementById('to').value.trim();
+      const comment = document.getElementById('comment').value.trim();
 
-    <section
-      id="successCard"
-      class="card hidden"
-    >
-      <h2>Заявка создана</h2>
+      if (!from || !to) {
+        alert('Заполните поля "Откуда" и "Куда"');
+        return;
+      }
 
-      <p>
-        На следующем этапе подключим отправку заявки в Telegram.
-      </p>
+      const statusEl = document.getElementById('passenger-status');
+      statusEl.textContent = 'Создаю заказ...';
 
-      <button
-        id="resetButton"
-        type="button"
-        class="button secondary"
-      >
-        Новая заявка
-      </button>
-    </section>
-  </main>
+      try {
+        const res = await fetch(SUPABASE_URL + '/rest/v1/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({
+            from,
+            to,
+            comment: comment || null,
+            status: 'pending',
+            user_id: userId,
+            driver_id: null
+          })
+        });
 
-  <script src="config.js"></script>
-  <script src="app.js"></script>
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await res.json();
+        statusEl.textContent = 'Заказ создан! ID: ' + (data[0]?.id || '?');
+        document.getElementById('from').value = '';
+        document.getElementById('to').value = '';
+        document.getElementById('comment').value = '';
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = 'Ошибка создания заказа.';
+      }
+    };
+
+    // Загрузка заказов для водителя
+    document.getElementById('btn-refresh-orders').onclick = loadOrders;
+
+    async function loadOrders() {
+      const listEl = document.getElementById('orders-list');
+      const statusEl = document.getElementById('driver-status');
+      listEl.innerHTML = 'Загрузка...';
+
+      try {
+        const res = await fetch(
+          SUPABASE_URL + '/rest/v1/orders?status=eq.pending&order=created_at.desc',
+          {
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+            }
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const orders = await res.json();
+        listEl.innerHTML = '';
+
+        if (orders.length === 0) {
+          listEl.textContent = 'Нет доступных заказов.';
+          return;
+        }
+
+        orders.forEach(o => {
+          const div = document.createElement('div');
+          div.className = 'order';
+          div.innerHTML = `
+            <div><b>ID:</b> ${o.id}</div>
+            <div><b>Откуда:</b> ${o.from}</div>
+            <div><b>Куда:</b> ${o.to}</div>
+            <div><b>Комментарий:</b> ${o.comment || '-'}</div>
+            <button data-order-id="${o.id}" data-user-id="${o.user_id || ''}">Принять</button>
+          `;
+          listEl.appendChild(div);
+        });
+
+        // Обработчики кнопок "Принять"
+        listEl.querySelectorAll('button[data-order-id]').forEach(btn => {
+          btn.onclick = () => acceptOrder(btn);
+        });
+
+      } catch (e) {
+        console.error(e);
+        listEl.textContent = 'Ошибка загрузки заказов.';
+      }
+    }
+
+    // Принятие заказа
+    async function acceptOrder(btn) {
+      const orderId = btn.getAttribute('data-order-id');
+      const userIdPassenger = btn.getAttribute('data-user-id');
+      const statusEl = document.getElementById('driver-status');
+      statusEl.textContent = 'Принимаю заказ...';
+
+      try {
+        const res = await fetch(SUPABASE_URL + `/rest/v1/orders?id=eq.${orderId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({
+            status: 'accepted',
+            driver_id: userId
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        statusEl.textContent = 'Заказ принят!';
+        loadOrders();
+
+        // Опционально: можно отправить сообщение пассажиру через бота
+        // (для этого нужен отдельный сервер, в MVP пока не делаем)
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = 'Ошибка принятия заказа.';
+      }
+    }
+  </script>
 </body>
 </html>
