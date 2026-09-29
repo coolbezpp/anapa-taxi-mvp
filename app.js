@@ -1,8 +1,14 @@
-const tg = window.Telegram?.WebApp;
+"use strict";
 
-if (tg) {
-  tg.ready();
-  tg.expand();
+const telegram =
+  window.Telegram &&
+  window.Telegram.WebApp
+    ? window.Telegram.WebApp
+    : null;
+
+if (telegram) {
+  telegram.ready();
+  telegram.expand();
 }
 
 const fromInput =
@@ -38,18 +44,7 @@ const priceElement =
 let calculatedPrice = 0;
 
 
-function loadRoutes() {
-  routeSelect.innerHTML = "";
-
-  const emptyOption =
-    document.createElement("option");
-
-  emptyOption.value = "";
-  emptyOption.textContent =
-    "Vyberite marshrut";
-
-  routeSelect.appendChild(emptyOption);
-
+function fillRoutes() {
   APP_CONFIG.routes.forEach(function (route) {
     const option =
       document.createElement("option");
@@ -57,11 +52,8 @@ function loadRoutes() {
     option.value =
       String(route.price);
 
-    option.dataset.routeId =
-      route.id;
-
     option.textContent =
-      route.title + " - " + route.price + " RUB";
+      route.title + " — " + route.price + " ₽";
 
     routeSelect.appendChild(option);
   });
@@ -69,18 +61,21 @@ function loadRoutes() {
 
 
 function validateForm() {
-  if (!fromInput.value.trim()) {
-    alert("Ukazhite adres podachi");
+  if (fromInput.value.trim() === "") {
+    alert("Укажите адрес подачи");
+    fromInput.focus();
     return false;
   }
 
-  if (!toInput.value.trim()) {
-    alert("Ukazhite adres naznacheniya");
+  if (toInput.value.trim() === "") {
+    alert("Укажите адрес назначения");
+    toInput.focus();
     return false;
   }
 
-  if (!routeSelect.value) {
-    alert("Vyberite marshrut");
+  if (routeSelect.value === "") {
+    alert("Выберите маршрут");
+    routeSelect.focus();
     return false;
   }
 
@@ -96,13 +91,13 @@ function calculatePrice() {
   calculatedPrice =
     Number(routeSelect.value);
 
-  if (!calculatedPrice) {
-    alert("Stoimost ne opredelena");
+  if (calculatedPrice <= 0) {
+    alert("Не удалось определить стоимость");
     return;
   }
 
   priceElement.textContent =
-    calculatedPrice + " RUB";
+    calculatedPrice + " ₽";
 
   priceCard.classList.remove("hidden");
 }
@@ -113,61 +108,36 @@ function createOrder() {
     return;
   }
 
-  if (!calculatedPrice) {
+  if (calculatedPrice <= 0) {
     calculatePrice();
   }
 
-  if (!calculatedPrice) {
+  if (calculatedPrice <= 0) {
     return;
   }
-
-  const telegramUser =
-    tg?.initDataUnsafe?.user || null;
 
   const order = {
     type: "new_order",
     id: String(Date.now()),
     city: APP_CONFIG.city,
-    tariff: APP_CONFIG.tariff.id,
-
-    customer: {
-      telegramId:
-        telegramUser?.id || null,
-
-      firstName:
-        telegramUser?.first_name || "",
-
-      lastName:
-        telegramUser?.last_name || "",
-
-      username:
-        telegramUser?.username || ""
-    },
-
-    from:
-      fromInput.value.trim(),
-
-    to:
-      toInput.value.trim(),
-
-    routePrice:
-      Number(calculatedPrice),
-
-    comment:
-      commentInput.value.trim(),
-
-    createdAt:
-      new Date().toISOString()
+    tariff: APP_CONFIG.tariff,
+    from: fromInput.value.trim(),
+    to: toInput.value.trim(),
+    routePrice: calculatedPrice,
+    comment: commentInput.value.trim(),
+    createdAt: new Date().toISOString()
   };
 
-  console.log("Order:", order);
+  console.log("Создан заказ:", order);
 
-  if (tg) {
-    tg.sendData(
+  if (telegram) {
+    telegram.sendData(
       JSON.stringify(order)
     );
   } else {
-    alert("Testovyi rezhim: zakaz sozdan");
+    alert(
+      "Тестовый режим: заказ сформирован"
+    );
   }
 
   priceCard.classList.add("hidden");
@@ -182,10 +152,12 @@ function resetForm() {
   commentInput.value = "";
 
   calculatedPrice = 0;
-  priceElement.textContent = "0 RUB";
+  priceElement.textContent = "0 ₽";
 
   priceCard.classList.add("hidden");
   successCard.classList.add("hidden");
+
+  fromInput.focus();
 }
 
 
@@ -204,4 +176,4 @@ resetButton.addEventListener(
   resetForm
 );
 
-loadRoutes();
+fillRoutes();
