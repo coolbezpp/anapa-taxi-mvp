@@ -5,10 +5,17 @@ if (tg) {
   tg.expand();
 }
 
-const fromInput = document.getElementById("from");
-const toInput = document.getElementById("to");
-const routeSelect = document.getElementById("route");
-const commentInput = document.getElementById("comment");
+const fromInput =
+  document.getElementById("from");
+
+const toInput =
+  document.getElementById("to");
+
+const routeSelect =
+  document.getElementById("route");
+
+const commentInput =
+  document.getElementById("comment");
 
 const calculateButton =
   document.getElementById("calculateButton");
@@ -31,22 +38,49 @@ const priceElement =
 let calculatedPrice = 0;
 
 
+function loadRoutes() {
+  routeSelect.innerHTML = "";
+
+  const emptyOption =
+    document.createElement("option");
+
+  emptyOption.value = "";
+  emptyOption.textContent =
+    "Vyberite marshrut";
+
+  routeSelect.appendChild(emptyOption);
+
+  APP_CONFIG.routes.forEach(function (route) {
+    const option =
+      document.createElement("option");
+
+    option.value =
+      String(route.price);
+
+    option.dataset.routeId =
+      route.id;
+
+    option.textContent =
+      route.title + " - " + route.price + " RUB";
+
+    routeSelect.appendChild(option);
+  });
+}
+
+
 function validateForm() {
   if (!fromInput.value.trim()) {
-    alert("Укажите адрес подачи");
-    fromInput.focus();
+    alert("Ukazhite adres podachi");
     return false;
   }
 
   if (!toInput.value.trim()) {
-    alert("Укажите адрес назначения");
-    toInput.focus();
+    alert("Ukazhite adres naznacheniya");
     return false;
   }
 
   if (!routeSelect.value) {
-    alert("Выберите маршрут");
-    routeSelect.focus();
+    alert("Vyberite marshrut");
     return false;
   }
 
@@ -55,27 +89,22 @@ function validateForm() {
 
 
 function calculatePrice() {
-  const selectedPrice =
-    Number(routeSelect.value);
-
-  if (!selectedPrice || selectedPrice <= 0) {
-    alert("Не удалось определить стоимость маршрута");
-    return false;
+  if (!validateForm()) {
+    return;
   }
 
-  calculatedPrice = selectedPrice;
+  calculatedPrice =
+    Number(routeSelect.value);
+
+  if (!calculatedPrice) {
+    alert("Stoimost ne opredelena");
+    return;
+  }
 
   priceElement.textContent =
-    `${calculatedPrice} ₽`;
+    calculatedPrice + " RUB";
 
   priceCard.classList.remove("hidden");
-
-  priceCard.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
-
-  return true;
 }
 
 
@@ -85,12 +114,11 @@ function createOrder() {
   }
 
   if (!calculatedPrice) {
-    const calculated =
-      calculatePrice();
+    calculatePrice();
+  }
 
-    if (!calculated) {
-      return;
-    }
+  if (!calculatedPrice) {
+    return;
   }
 
   const telegramUser =
@@ -99,8 +127,8 @@ function createOrder() {
   const order = {
     type: "new_order",
     id: String(Date.now()),
-    city: "Анапа",
-    tariff: "Стандарт",
+    city: APP_CONFIG.city,
+    tariff: APP_CONFIG.tariff.id,
 
     customer: {
       telegramId:
@@ -116,43 +144,34 @@ function createOrder() {
         telegramUser?.username || ""
     },
 
-    from: fromInput.value.trim(),
-    to: toInput.value.trim(),
+    from:
+      fromInput.value.trim(),
 
-    routePrice: Number(calculatedPrice),
+    to:
+      toInput.value.trim(),
 
-    comment: commentInput.value.trim(),
+    routePrice:
+      Number(calculatedPrice),
+
+    comment:
+      commentInput.value.trim(),
 
     createdAt:
       new Date().toISOString()
   };
 
-  console.log("Отправляем заказ:", order);
-  console.log(
-    "Стоимость:",
-    order.routePrice
-  );
+  console.log("Order:", order);
 
   if (tg) {
     tg.sendData(
       JSON.stringify(order)
     );
   } else {
-    alert(
-      "Mini App открыто не через Telegram.
-
-"
-      + "Заказ сформирован в тестовом режиме."
-    );
+    alert("Testovyi rezhim: zakaz sozdan");
   }
 
   priceCard.classList.add("hidden");
   successCard.classList.remove("hidden");
-
-  successCard.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
 }
 
 
@@ -163,22 +182,16 @@ function resetForm() {
   commentInput.value = "";
 
   calculatedPrice = 0;
-  priceElement.textContent = "0 ₽";
+  priceElement.textContent = "0 RUB";
 
   priceCard.classList.add("hidden");
   successCard.classList.add("hidden");
-
-  fromInput.focus();
 }
 
 
 calculateButton.addEventListener(
   "click",
-  () => {
-    if (validateForm()) {
-      calculatePrice();
-    }
-  }
+  calculatePrice
 );
 
 orderButton.addEventListener(
@@ -190,3 +203,5 @@ resetButton.addEventListener(
   "click",
   resetForm
 );
+
+loadRoutes();
