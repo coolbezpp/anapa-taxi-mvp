@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1"
+  >
+  <title>Такси Анапа</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div>
+        <div class="eyebrow">Город</div>
+        <h1 id="cityName">Анапа</h1>
+      </div>
+
+      <div class="logo">🚕</div>
+    </header>
+
+    <section class="card">
+      <h2>Заказать такси</h2>
+
+      <label for="from">Откуда</label>
+      <input
+        id="from"
+        type="text"
+        placeholder="Например: улица Ленина, 10"
+      >
+
+      <label for="to">Куда</label>
+      <input
+        id="to"
+        type="text"
+        placeholder="Например: Витязево"
+      >
+
+      <label for="zone">Направление</label>
+      <select id="zone">
+        <option value="">Выберите направление</option>
+      </select>
+
+      <label for="comment">Комментарий</label>
+      <textarea
+        id="comment"
+        rows="3"
+        placeholder="Детское кресло, багаж и т.д."
+      ></textarea>
+
+      <button id="calculateButton" class="button secondary">
+        Рассчитать стоимость
+      </button>
+    </section>
+
+    <section id="priceCard" class="card hidden">
+      <div class="price-label">Тариф</div>
+      <div class="tariff-name">Стандарт</div>
+
+      <div id="priceValue" class="price">0 ₽</div>
+      <div class="price-note">Ориентировочная стоимость поездки</div>
+
+      <button id="orderButton" class="button primary">
+        Заказать такси
+      </button>
+    </section>
+
+    <section id="statusCard" class="card hidden">
+      <h2>Заказ отправлен</h2>
+      <p id="statusText">
+        Ищем водителя. Ожидайте уведомление в Telegram.
+      </p>
+
+      <button id="closeButton" class="button secondary">
+        Закрыть
+      </button>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
