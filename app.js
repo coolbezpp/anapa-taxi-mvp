@@ -10,15 +10,26 @@ const toInput = document.getElementById("to");
 const routeSelect = document.getElementById("route");
 const commentInput = document.getElementById("comment");
 
-const calculateButton = document.getElementById("calculateButton");
-const orderButton = document.getElementById("orderButton");
-const resetButton = document.getElementById("resetButton");
+const calculateButton =
+  document.getElementById("calculateButton");
 
-const priceCard = document.getElementById("priceCard");
-const successCard = document.getElementById("successCard");
-const priceElement = document.getElementById("price");
+const orderButton =
+  document.getElementById("orderButton");
+
+const resetButton =
+  document.getElementById("resetButton");
+
+const priceCard =
+  document.getElementById("priceCard");
+
+const successCard =
+  document.getElementById("successCard");
+
+const priceElement =
+  document.getElementById("price");
 
 let calculatedPrice = 0;
+
 
 function validateForm() {
   if (!fromInput.value.trim()) {
@@ -42,16 +53,20 @@ function validateForm() {
   return true;
 }
 
-function calculatePrice() {
-  const selectedPrice = Number(routeSelect.value);
 
-  if (!selectedPrice) {
-    alert("Сначала выберите маршрут");
-    return;
+function calculatePrice() {
+  const selectedPrice =
+    Number(routeSelect.value);
+
+  if (!selectedPrice || selectedPrice <= 0) {
+    alert("Не удалось определить стоимость маршрута");
+    return false;
   }
 
   calculatedPrice = selectedPrice;
-  priceElement.textContent = `${calculatedPrice} ₽`;
+
+  priceElement.textContent =
+    `${calculatedPrice} ₽`;
 
   priceCard.classList.remove("hidden");
 
@@ -59,7 +74,10 @@ function calculatePrice() {
     behavior: "smooth",
     block: "center"
   });
+
+  return true;
 }
+
 
 function createOrder() {
   if (!validateForm()) {
@@ -67,14 +85,16 @@ function createOrder() {
   }
 
   if (!calculatedPrice) {
-    calculatePrice();
+    const calculated =
+      calculatePrice();
+
+    if (!calculated) {
+      return;
+    }
   }
 
-  if (!calculatedPrice) {
-    return;
-  }
-
-  const telegramUser = tg?.initDataUnsafe?.user || null;
+  const telegramUser =
+    tg?.initDataUnsafe?.user || null;
 
   const order = {
     type: "new_order",
@@ -83,29 +103,46 @@ function createOrder() {
     tariff: "Стандарт",
 
     customer: {
-      telegramId: telegramUser?.id || null,
-      firstName: telegramUser?.first_name || "",
-      lastName: telegramUser?.last_name || "",
-      username: telegramUser?.username || ""
+      telegramId:
+        telegramUser?.id || null,
+
+      firstName:
+        telegramUser?.first_name || "",
+
+      lastName:
+        telegramUser?.last_name || "",
+
+      username:
+        telegramUser?.username || ""
     },
 
     from: fromInput.value.trim(),
     to: toInput.value.trim(),
-    routePrice: calculatedPrice,
+
+    routePrice: Number(calculatedPrice),
+
     comment: commentInput.value.trim(),
-    createdAt: new Date().toISOString()
+
+    createdAt:
+      new Date().toISOString()
   };
 
-  console.log("Создан заказ:", order);
+  console.log("Отправляем заказ:", order);
+  console.log(
+    "Стоимость:",
+    order.routePrice
+  );
 
   if (tg) {
-    tg.sendData(JSON.stringify(order));
+    tg.sendData(
+      JSON.stringify(order)
+    );
   } else {
     alert(
       "Mini App открыто не через Telegram.
 
-" +
-      "Заказ сформирован только в тестовом режиме."
+"
+      + "Заказ сформирован в тестовом режиме."
     );
   }
 
@@ -117,6 +154,7 @@ function createOrder() {
     block: "center"
   });
 }
+
 
 function resetForm() {
   fromInput.value = "";
@@ -133,11 +171,22 @@ function resetForm() {
   fromInput.focus();
 }
 
-calculateButton.addEventListener("click", () => {
-  if (validateForm()) {
-    calculatePrice();
-  }
-});
 
-orderButton.addEventListener("click", createOrder);
-resetButton.addEventListener("click", resetForm);
+calculateButton.addEventListener(
+  "click",
+  () => {
+    if (validateForm()) {
+      calculatePrice();
+    }
+  }
+);
+
+orderButton.addEventListener(
+  "click",
+  createOrder
+);
+
+resetButton.addEventListener(
+  "click",
+  resetForm
+);
