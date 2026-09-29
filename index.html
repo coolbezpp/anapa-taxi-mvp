@@ -5,7 +5,7 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1, maximum-scale=1"
+    content="width=device-width, initial-scale=1"
   >
 
   <title>Такси Анапа</title>
@@ -17,18 +17,9 @@
 
 <body>
   <main class="app">
-    <header class="app-header">
-      <div>
-        <div class="caption">Такси в городе</div>
-        <h1 id="cityName">Анапа</h1>
-      </div>
-
-      <div class="taxi-icon">🚕</div>
-    </header>
+    <h1>Такси Анапа</h1>
 
     <section class="card">
-      <h2>Заказать поездку</h2>
-
       <label for="from">Откуда</label>
 
       <input
@@ -51,26 +42,6 @@
         <option value="">
           Выберите маршрут
         </option>
-
-        <option value="250">
-          Центр — Центр · 250 ₽
-        </option>
-
-        <option value="400">
-          Центр — Джемете · 400 ₽
-        </option>
-
-        <option value="500">
-          Центр — Витязево · 500 ₽
-        </option>
-
-        <option value="650">
-          Центр — Сукко · 650 ₽
-        </option>
-
-        <option value="900">
-          Центр — Большой Утриш · 900 ₽
-        </option>
       </select>
 
       <label for="comment">Комментарий</label>
@@ -78,13 +49,13 @@
       <textarea
         id="comment"
         rows="3"
-        placeholder="Например: есть багаж"
+        placeholder="Комментарий водителю"
       ></textarea>
 
       <button
         id="calculateButton"
-        class="button secondary"
         type="button"
+        class="button secondary"
       >
         Рассчитать стоимость
       </button>
@@ -94,24 +65,16 @@
       id="priceCard"
       class="card hidden"
     >
-      <div class="muted">Тариф</div>
-
-      <div class="tariff">
-        Стандарт
-      </div>
+      <p>Тариф: Стандарт</p>
 
       <div id="price" class="price">
         0 ₽
       </div>
 
-      <div class="muted">
-        Ориентировочная стоимость поездки
-      </div>
-
       <button
         id="orderButton"
-        class="button primary"
         type="button"
+        class="button primary"
       >
         Заказать такси
       </button>
@@ -121,21 +84,18 @@
       id="successCard"
       class="card hidden"
     >
-      <div class="success-icon">✓</div>
-
       <h2>Заявка создана</h2>
 
-      <p class="muted">
-        Заявка отправлена водителям.
-        Ожидайте подтверждения в Telegram.
+      <p>
+        На следующем этапе подключим отправку заявки в Telegram.
       </p>
 
       <button
         id="resetButton"
-        class="button secondary"
         type="button"
+        class="button secondary"
       >
-        Создать новую заявку
+        Новая заявка
       </button>
     </section>
   </main>
