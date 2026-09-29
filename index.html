@@ -2,81 +2,140 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1, maximum-scale=1"
   >
+
   <title>Такси Анапа</title>
 
   <link rel="stylesheet" href="style.css">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
+
 <body>
   <main class="app">
-    <header class="header">
+    <header class="app-header">
       <div>
-        <div class="eyebrow">Город</div>
+        <div class="caption">Такси в городе</div>
         <h1 id="cityName">Анапа</h1>
       </div>
 
-      <div class="logo">🚕</div>
+      <div class="taxi-icon">🚕</div>
     </header>
 
     <section class="card">
-      <h2>Заказать такси</h2>
+      <h2>Заказать поездку</h2>
 
       <label for="from">Откуда</label>
+
       <input
         id="from"
         type="text"
-        placeholder="Например: улица Ленина, 10"
+        placeholder="Адрес подачи"
       >
 
       <label for="to">Куда</label>
+
       <input
         id="to"
         type="text"
-        placeholder="Например: Витязево"
+        placeholder="Адрес назначения"
       >
 
-      <label for="zone">Направление</label>
-      <select id="zone">
-        <option value="">Выберите направление</option>
+      <label for="route">Маршрут</label>
+
+      <select id="route">
+        <option value="">
+          Выберите маршрут
+        </option>
+
+        <option value="250">
+          Центр — Центр · 250 ₽
+        </option>
+
+        <option value="400">
+          Центр — Джемете · 400 ₽
+        </option>
+
+        <option value="500">
+          Центр — Витязево · 500 ₽
+        </option>
+
+        <option value="650">
+          Центр — Сукко · 650 ₽
+        </option>
+
+        <option value="900">
+          Центр — Большой Утриш · 900 ₽
+        </option>
       </select>
 
       <label for="comment">Комментарий</label>
+
       <textarea
         id="comment"
         rows="3"
-        placeholder="Детское кресло, багаж и т.д."
+        placeholder="Например: есть багаж"
       ></textarea>
 
-      <button id="calculateButton" class="button secondary">
+      <button
+        id="calculateButton"
+        class="button secondary"
+        type="button"
+      >
         Рассчитать стоимость
       </button>
     </section>
 
-    <section id="priceCard" class="card hidden">
-      <div class="price-label">Тариф</div>
-      <div class="tariff-name">Стандарт</div>
+    <section
+      id="priceCard"
+      class="card hidden"
+    >
+      <div class="muted">Тариф</div>
 
-      <div id="priceValue" class="price">0 ₽</div>
-      <div class="price-note">Ориентировочная стоимость поездки</div>
+      <div class="tariff">
+        Стандарт
+      </div>
 
-      <button id="orderButton" class="button primary">
+      <div id="price" class="price">
+        0 ₽
+      </div>
+
+      <div class="muted">
+        Ориентировочная стоимость поездки
+      </div>
+
+      <button
+        id="orderButton"
+        class="button primary"
+        type="button"
+      >
         Заказать такси
       </button>
     </section>
 
-    <section id="statusCard" class="card hidden">
-      <h2>Заказ отправлен</h2>
-      <p id="statusText">
-        Ищем водителя. Ожидайте уведомление в Telegram.
+    <section
+      id="successCard"
+      class="card hidden"
+    >
+      <div class="success-icon">✓</div>
+
+      <h2>Заявка создана</h2>
+
+      <p class="muted">
+        Заявка отправлена водителям.
+        Ожидайте подтверждения в Telegram.
       </p>
 
-      <button id="closeButton" class="button secondary">
-        Закрыть
+      <button
+        id="resetButton"
+        class="button secondary"
+        type="button"
+      >
+        Создать новую заявку
       </button>
     </section>
   </main>
