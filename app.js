@@ -5,119 +5,139 @@ if (tg) {
   tg.expand();
 }
 
-const cityName = document.getElementById("cityName");
-const zoneSelect = document.getElementById("zone");
-const calculateButton = document.getElementById("calculateButton");
-const orderButton = document.getElementById("orderButton");
-const closeButton = document.getElementById("closeButton");
-
 const fromInput = document.getElementById("from");
 const toInput = document.getElementById("to");
+const routeSelect = document.getElementById("route");
 const commentInput = document.getElementById("comment");
 
+const calculateButton = document.getElementById("calculateButton");
+const orderButton = document.getElementById("orderButton");
+const resetButton = document.getElementById("resetButton");
+
 const priceCard = document.getElementById("priceCard");
-const priceValue = document.getElementById("priceValue");
-const statusCard = document.getElementById("statusCard");
+const successCard = document.getElementById("successCard");
+const priceElement = document.getElementById("price");
 
 let calculatedPrice = 0;
-
-cityName.textContent = APP_CONFIG.city;
-
-APP_CONFIG.zones.forEach((zone) => {
-  const option = document.createElement("option");
-
-  option.value = zone.id;
-  option.textContent = `${zone.title} — ${zone.price} ₽`;
-
-  zoneSelect.appendChild(option);
-});
-
-function getSelectedZone() {
-  const zoneId = zoneSelect.value;
-
-  return APP_CONFIG.zones.find((zone) => zone.id === zoneId);
-}
 
 function validateForm() {
   if (!fromInput.value.trim()) {
     alert("Укажите адрес подачи");
+    fromInput.focus();
     return false;
   }
 
   if (!toInput.value.trim()) {
     alert("Укажите адрес назначения");
+    toInput.focus();
     return false;
   }
 
-  if (!zoneSelect.value) {
-    alert("Выберите направление");
+  if (!routeSelect.value) {
+    alert("Выберите маршрут");
+    routeSelect.focus();
     return false;
   }
 
   return true;
 }
 
-calculateButton.addEventListener("click", () => {
-  if (!validateForm()) {
+function calculatePrice() {
+  const selectedPrice = Number(routeSelect.value);
+
+  if (!selectedPrice) {
+    alert("Сначала выберите маршрут");
     return;
   }
 
-  const zone = getSelectedZone();
-
-  calculatedPrice = zone.price;
-
-  priceValue.textContent =
-    `${calculatedPrice} ${APP_CONFIG.currency}`;
+  calculatedPrice = selectedPrice;
+  priceElement.textContent = `${calculatedPrice} ₽`;
 
   priceCard.classList.remove("hidden");
-  priceCard.scrollIntoView({ behavior: "smooth" });
-});
 
-orderButton.addEventListener("click", () => {
+  priceCard.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+}
+
+function createOrder() {
   if (!validateForm()) {
     return;
   }
 
-  const user = tg?.initDataUnsafe?.user || null;
-  const zone = getSelectedZone();
+  if (!calculatedPrice) {
+    calculatePrice();
+  }
+
+  if (!calculatedPrice) {
+    return;
+  }
+
+  const telegramUser = tg?.initDataUnsafe?.user || null;
 
   const order = {
     type: "new_order",
-    orderId: String(Date.now()),
-    city: APP_CONFIG.city,
-    tariff: APP_CONFIG.tariff.id,
-    tariffTitle: APP_CONFIG.tariff.title,
+    id: String(Date.now()),
+    city: "Анапа",
+    tariff: "Стандарт",
+
     customer: {
-      telegramId: user?.id || null,
-      firstName: user?.first_name || "",
-      lastName: user?.last_name || "",
-      username: user?.username || ""
+      telegramId: telegramUser?.id || null,
+      firstName: telegramUser?.first_name || "",
+      lastName: telegramUser?.last_name || "",
+      username: telegramUser?.username || ""
     },
+
     from: fromInput.value.trim(),
     to: toInput.value.trim(),
-    zone: zone.title,
+    routePrice: calculatedPrice,
     comment: commentInput.value.trim(),
-    estimatedPrice: calculatedPrice,
     createdAt: new Date().toISOString()
   };
 
-  console.log("Новый заказ:", order);
+  console.log("Создан заказ:", order);
 
   if (tg) {
     tg.sendData(JSON.stringify(order));
   } else {
-    alert("Тестовый режим: заказ сформирован");
+    alert(
+      "Mini App открыто не через Telegram.
+
+" +
+      "Заказ сформирован только в тестовом режиме."
+    );
   }
 
   priceCard.classList.add("hidden");
-  statusCard.classList.remove("hidden");
-  statusCard.scrollIntoView({ behavior: "smooth" });
-});
+  successCard.classList.remove("hidden");
 
-closeButton.addEventListener("click", () => {
-  if (tg) {
-    tg.close();
-  } else {
-    statusCard.classList.add("hidden");
+  successCard.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+}
+
+function resetForm() {
+  fromInput.value = "";
+  toInput.value = "";
+  routeSelect.value = "";
+  commentInput.value = "";
+
+  calculatedPrice = 0;
+  priceElement.textContent = "0 ₽";
+
+  priceCard.classList.add("hidden");
+  successCard.classList.add("hidden");
+
+  fromInput.focus();
+}
+
+calculateButton.addEventListener("click", () => {
+  if (validateForm()) {
+    calculatePrice();
   }
 });
+
+orderButton.addEventListener("click", createOrder);
+resetButton.addEventListener("click", resetForm);
