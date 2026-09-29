@@ -45,18 +45,37 @@ let calculatedPrice = 0;
 
 
 function fillRoutes() {
-  APP_CONFIG.routes.forEach(function (route) {
-    const option =
-      document.createElement("option");
+  routeSelect.innerHTML = "";
 
-    option.value =
-      String(route.price);
+  const emptyOption =
+    document.createElement("option");
 
-    option.textContent =
-      route.title + " — " + route.price + " ₽";
+  emptyOption.value = "";
+  emptyOption.textContent =
+    "Выберите маршрут";
 
-    routeSelect.appendChild(option);
-  });
+  routeSelect.appendChild(emptyOption);
+
+  APP_CONFIG.routes.forEach(
+    function (route) {
+      const option =
+        document.createElement("option");
+
+      option.value =
+        String(route.price);
+
+      option.dataset.routeId =
+        route.id;
+
+      option.textContent =
+        route.title
+        + " — "
+        + route.price
+        + " ₽";
+
+      routeSelect.appendChild(option);
+    }
+  );
 }
 
 
@@ -85,7 +104,7 @@ function validateForm() {
 
 function calculatePrice() {
   if (!validateForm()) {
-    return;
+    return false;
   }
 
   calculatedPrice =
@@ -93,13 +112,15 @@ function calculatePrice() {
 
   if (calculatedPrice <= 0) {
     alert("Не удалось определить стоимость");
-    return;
+    return false;
   }
 
   priceElement.textContent =
     calculatedPrice + " ₽";
 
   priceCard.classList.remove("hidden");
+
+  return true;
 }
 
 
@@ -109,12 +130,25 @@ function createOrder() {
   }
 
   if (calculatedPrice <= 0) {
-    calculatePrice();
+    const success =
+      calculatePrice();
+
+    if (!success) {
+      return;
+    }
   }
 
-  if (calculatedPrice <= 0) {
-    return;
-  }
+  const selectedOption =
+    routeSelect.options[
+      routeSelect.selectedIndex
+    ];
+
+  const telegramUser =
+    telegram &&
+    telegram.initDataUnsafe &&
+    telegram.initDataUnsafe.user
+      ? telegram.initDataUnsafe.user
+      : null;
 
   const order = {
     type: "new_order",
@@ -123,36 +157,29 @@ function createOrder() {
     tariff: APP_CONFIG.tariff,
     from: fromInput.value.trim(),
     to: toInput.value.trim(),
+    route: selectedOption.textContent,
     routePrice: calculatedPrice,
     comment: commentInput.value.trim(),
-    createdAt: new Date().toISOString()
-  };
-
-  console.log("Отправляем заказ:", order);
-
-  if (!telegram) {
-    alert(
-      "Mini App открыто не через Telegram."
-      + "Заказ создан только в тестовом режиме."
-    );
-    return;
-  }
-
-  telegram.sendData(
-    JSON.stringify(order)
-  );
-}
-
-  const order = {
-    type: "new_order",
-    id: String(Date.now()),
-    city: APP_CONFIG.city,
-    tariff: APP_CONFIG.tariff,
-    from: fromInput.value.trim(),
-    to: toInput.value.trim(),
-    routePrice: calculatedPrice,
-    comment: commentInput.value.trim(),
-    createdAt: new Date().toISOString()
+    customer: {
+      telegramId:
+        telegramUser
+          ? telegramUser.id
+          : null,
+      firstName:
+        telegramUser
+          ? telegramUser.first_name || ""
+          : "",
+      lastName:
+        telegramUser
+          ? telegramUser.last_name || ""
+          : "",
+      username:
+        telegramUser
+          ? telegramUser.username || ""
+          : ""
+    },
+    createdAt:
+      new Date().toISOString()
   };
 
   console.log("Создан заказ:", order);
@@ -161,11 +188,15 @@ function createOrder() {
     telegram.sendData(
       JSON.stringify(order)
     );
-  } else {
-    alert(
-      "Тестовый режим: заказ сформирован"
-    );
+    return;
   }
+
+  alert(
+    "Mini App открыто вне Telegram.
+
+"
+    + "Заказ создан только в тестовом режиме."
+  );
 
   priceCard.classList.add("hidden");
   successCard.classList.remove("hidden");
@@ -179,7 +210,9 @@ function resetForm() {
   commentInput.value = "";
 
   calculatedPrice = 0;
-  priceElement.textContent = "0 ₽";
+
+  priceElement.textContent =
+    "0 ₽";
 
   priceCard.classList.add("hidden");
   successCard.classList.add("hidden");
@@ -190,17 +223,23 @@ function resetForm() {
 
 calculateButton.addEventListener(
   "click",
-  calculatePrice
+  function () {
+    calculatePrice();
+  }
 );
 
 orderButton.addEventListener(
   "click",
-  createOrder
+  function () {
+    createOrder();
+  }
 );
 
 resetButton.addEventListener(
   "click",
-  resetForm
+  function () {
+    resetForm();
+  }
 );
 
 fillRoutes();
