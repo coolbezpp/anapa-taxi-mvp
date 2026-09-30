@@ -72,12 +72,15 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVybXhmbWRuanN0cWZkY3ZhZGR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MDkyMzgsImV4cCI6MjEwNjI4NTIzOH0.SgV_pDL7XFw83lJ18BzLocSPFVYPGcwBq3HLaxss7Yk';
     // =============================================
 
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+    const tg = window.Telegram?.WebApp || null;
 
-    // Простая "идентификация" пользователя — его Telegram ID
-    const userId = tg.initDataUnsafe?.user?.id?.toString() || 'anon';
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+
+// Простая "идентификация" пользователя — его Telegram ID
+const userId = tg?.initDataUnsafe?.user?.id?.toString() || 'anon';
 
     // Переключение экранов
     const roleScreen = document.getElementById('role-screen');
